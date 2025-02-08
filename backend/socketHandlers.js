@@ -1,16 +1,36 @@
-// socketHandlers.js
-export const handleConnection = (socket) => {
-    console.log(`A user connected: ${socket.id}`);
+// socketHandler.js
+export const users = [];
 
-    // Handle socket disconnect event
-    socket.on('disconnect', () => {
-        console.log(`User disconnected: ${socket.id}`);
-    });
+export const handleSocketConnection = (socket, io) => {
+  console.log('A user connected: ' + socket.id);
 
-    // Handle socket error event
-    socket.on('error', (err) => {
-        console.error(`Socket error: ${err}`);
-    });
+  // Handle user joining with a username
+  socket.on('new user', (username) => {
+    users.push({ id: socket.id, username });
+    io.emit('user joined', `${username} has joined the chat`);
+    console.log(`User ${username} joined`);
+  });
 
-    // You can add other socket event listeners here, e.g., custom events
+  // Handle private message
+  socket.on('private message', ({ to, message }) => {
+    const receiver = users.find((user) => user.username === to);
+    if (receiver) {
+      io.to(receiver.id).emit('private message', {
+        message,
+        from: socket.id,
+        to: receiver.id,
+      });
+    }
+  });
+
+  // Handle user disconnecting
+  socket.on('disconnect', () => {
+    const userIndex = users.findIndex((user) => user.id === socket.id);
+    if (userIndex !== -1) {
+      const disconnectedUser = users[userIndex].username;
+      users.splice(userIndex, 1);
+      io.emit('user left', `${disconnectedUser} has left the chat`);
+      console.log(`${disconnectedUser} disconnected`);
+    }
+  });
 };

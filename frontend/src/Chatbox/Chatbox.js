@@ -1,52 +1,40 @@
-import React, { useEffect, useState } from 'react';
-import {io} from 'socket.io-client'
-const socket = io('http://localhost:3001');
+import React, { useState } from 'react';
 
-const Chatbox = () => {
-    const [msg, setMsg] = useState([])
-    const [inputMessage, setInputMessage] = useState('');
+const ChatBox = ({ selectedUser, onSendMessage }) => {
+  const [message, setMessage] = useState('');
 
-    useEffect(()=>{
-        socket.on('chat message', (msg)=>{
-            setMsg((prev) => [...prev, msg])
-        })
-
-        return ()=>{
-            socket.off('chat message')
-        }
-    }, []);
-
-    const handleInputChange = (e)=>{
-        setInputMessage(e.target.value)
+  const handleSendMessage = () => {
+    if (message && selectedUser) {
+      onSendMessage(message);
+      setMessage('');
     }
+  };
 
-    const handleSendMessage = ()=>{
-        if (inputMessage.trim()) {
-            socket.emit('chat message', inputMessage);
-            setMsg((prev) => [...prev, inputMessage]);
-            setInputMessage('')
-        }
-    }
   return (
-    <div className="chat-container">
-            <div className="chat-box">
-                {msg.map((msgg, index) => (
-                    <div key={index} className="chat-message">
-                        {msgg}
-                    </div>
-                ))}
-            </div>
-            <div className="chat-input">
-                <input
-                    type="text"
-                    value={inputMessage}
-                    onChange={handleInputChange}
-                    placeholder="Type a message..."
-                />
-                <button onClick={handleSendMessage}>Send</button>
-            </div>
+    <div className="ml-6 flex-1 flex flex-col h-full">
+      <div className="bg-gray-800 text-white p-4 rounded-t-lg">
+        <h3 className="text-lg">Chat with: {selectedUser}</h3>
+      </div>
+      <div className="flex-1 p-4 overflow-y-auto bg-gray-50">
+        {/* Chat history will be displayed here */}
+      </div>
+      <div className="bg-gray-200 p-4 rounded-b-lg flex items-center">
+        <input
+          type="text"
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          className="w-full p-2 border border-gray-300 rounded-lg"
+          placeholder="Type a message"
+        />
+        <button
+          onClick={handleSendMessage}
+          className="ml-3 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+        >
+          Send
+        </button>
+      </div>
     </div>
-  )
-}
+  );
+};
 
-export default Chatbox
+export default ChatBox;

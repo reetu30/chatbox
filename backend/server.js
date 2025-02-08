@@ -1,24 +1,27 @@
-// server.js
 import http from 'http';
-import { Server } from 'socket.io';
+import { Server as socketIo } from 'socket.io';
+import express from 'express';
+import cors from 'cors';
+// import bodyParser from 'body-parser';
+import { handleSocketConnection } from './socketHandlers.js';
+import { corsOptions } from './corsOptions.js';
 
-// Import the connection handler function
-import { handleConnection } from './socketHandlers.js';
+const PORT = process.env.PORT || 3001;
 
-const server = http.createServer((req, res) => {
-    res.writeHead(200, { 'Content-Type': 'text/plain' });
-    res.end('Socket.IO Server is running');
-});
+const app = express();
+const server = http.createServer(app);
+// const io = new socketIo(server);
+const io = new socketIo(server, {
+    cors: {
+      origin: 'http://localhost:3000',  // Allow requests from the React app
+      methods: ['GET', 'POST'],
+      allowedHeaders: ['Content-Type']
+    }
+  });
+app.use(cors(corsOptions));
 
-const io = new Server(3000); // Create a Socket.IO server on port 3000
+io.on('connection', (socket)=> handleSocketConnection(socket, io));
 
-// Create socket.io instance and pass the server
-// const io = socketIo(server);
-
-// Handle socket connections using the imported function
-io.on('connection', handleConnection);
-
-// Start the server on port 3000
-server.listen(3001, () => {
-    console.log('Server is listening on http://localhost:3000');
+server.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
 });
